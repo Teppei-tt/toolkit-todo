@@ -1,0 +1,7 @@
+.root {
+  height: 50vh;
+  // はみ出た部分を隠す
+  overflow: hidden;
+  // スクロールできる
+  overflow-y: auto;
+}
