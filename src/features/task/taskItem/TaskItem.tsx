@@ -5,6 +5,8 @@ import EditIcon from "@material-ui/icons/Edit";
 import DeleteIcon from "@material-ui/icons/Delete";
 import styles from "./TaskItem.module.scss";
 import { style } from "@material-ui/system";
+import Modal from "@material-ui/core/Modal";
+import TaskForm from "../taskForm/TaskForm";
 
 //interfaceによる型定義
 interface PropTypes {
@@ -13,6 +15,16 @@ interface PropTypes {
 
 //TaskItemコンポーネントに上のPropTypesのpropsを渡すということ
 const TaskItem: React.FC<PropTypes> = ({ task }) => {
+  const [open, setOpen] = React.useState(false);
+
+  const handleOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
   return (
     <div className={styles.root}>
       <div className={styles.title}>
@@ -25,10 +37,7 @@ const TaskItem: React.FC<PropTypes> = ({ task }) => {
           onClick={() => console.log(`check ${task.id}`)}
           className={styles.checkbox}
         />
-        <button
-          onClick={() => console.log(`edit ${task.id}`)}
-          className={styles.edit_button}
-        >
+        <button onClick={handleOpen} className={styles.edit_button}>
           <EditIcon className={styles.icon} />
         </button>
         <button
@@ -38,6 +47,12 @@ const TaskItem: React.FC<PropTypes> = ({ task }) => {
           <DeleteIcon className={styles.icon} />
         </button>
       </div>
+      <Modal open={open} onClose={handleClose} className={styles.modal}>
+        <div className={styles.modal_content}>
+          <div className={styles.modal_title}>Edit</div>
+          <TaskForm  edit/>
+        </div>
+      </Modal>
     </div>
   );
 };
