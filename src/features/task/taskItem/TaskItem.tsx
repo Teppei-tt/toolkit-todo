@@ -5,7 +5,7 @@ import EventNoteIcon from "@material-ui/icons/EventNote";
 import EditIcon from "@material-ui/icons/Edit";
 import DeleteIcon from "@material-ui/icons/Delete";
 import styles from "./TaskItem.module.scss";
-import { selectTask, handleModalOpen, selectIsModalOpen } from "../taskSlice";
+import { deleteTask, selectTask, completeTask, handleModalOpen, selectIsModalOpen } from "../taskSlice";
 import Modal from "@material-ui/core/Modal";
 import TaskForm from "../taskForm/TaskForm";
 
@@ -36,14 +36,14 @@ const TaskItem: React.FC<PropTypes> = ({ task }) => {
       <div className={styles.right_item}>
         <Checkbox
           checked={task.completed}
-          onClick={() => console.log(`check ${task.id}`)}
+          onClick={() => dispatch(completeTask(task))}
           className={styles.checkbox}
         />
         <button onClick={handleOpen} className={styles.edit_button}>
           <EditIcon className={styles.icon} />
         </button>
         <button
-          onClick={() => console.log(`delete ${task.id}`)}
+          onClick={() => dispatch(deleteTask(task))}
           className={styles.delete_button}
         >
           <DeleteIcon className={styles.icon} />
