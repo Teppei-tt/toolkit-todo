@@ -1,23 +1,43 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState, AppThunk } from "../../app/store";
+import { db } from "../../firebase";
 
 export interface TaskState {
   //taskが何個あるのかを管理する
   idCount: number;
   // storeに保存するtaskの一覧
-  tasks: { id: number; title: string; completed: boolean }[];
+  tasks: { id: string; title: string; completed: boolean }[];
   // taskのtitleを編集する際にどのtaskが選択されているか
-  selectedTask: { id: number; title: string; completed: boolean };
+  selectedTask: { id: string; title: string; completed: boolean };
   // modalを開くか閉じるかのフラグ
   isModalOpen: boolean;
 }
 
 const initialState: TaskState = {
   idCount: 1,
-  tasks: [{ id: 1, title: "Task A", completed: false }],
-  selectedTask: { id: 0, title: "", completed: false },
+  tasks: [],
+  selectedTask: { id: "", title: "", completed: false },
   isModalOpen: false,
 };
+
+/* ===============================
+          Taskの全件取得
+================================ */
+export const fetchTasks = createAsyncThunk("task/getAllTasks", async () => {
+  // 日付の降順（新しいデータが上に来る）にデータをソートしてtaskのデータを全件取得
+  const res = await db.collection("tasks").orderBy("dateTime", "desc").get();
+
+  // レスポンスの整形
+  const allTasks = res.docs.map((doc) => ({
+    id: doc.id,
+    title: doc.data().title,
+    completed: doc.data().completed,
+  }));
+
+  const taskNunber = allTasks.length;
+  const passData = { allTasks, taskNunber };
+  return passData;
+});
 
 export const taskSlice = createSlice({
   name: "task",
@@ -25,27 +45,27 @@ export const taskSlice = createSlice({
   reducers: {
     // taskの作成
     createTask: (state, action) => {
-      state.idCount++;
-      const newTask = {
-        id: state.idCount,
-        title: action.payload,
-        completed: false,
-      };
-      state.tasks = [newTask, ...state.tasks];
+      // state.idCount++;
+      // const newTask = {
+      //   id: state.idCount,
+      //   title: action.payload,
+      //   completed: false,
+      // };
+      // state.tasks = [newTask, ...state.tasks];
     },
     // taskの編集
     editTask: (state, action) => {
-      // state.tasksの中から指定したtaskを抜き出す
-      const task = state.tasks.find((t) => t.id === action.payload.id);
-      if (task) {
-        // 抜き出したtaskのtitleを書き換える
-        task.title = action.payload.title;
-      }
+      // // state.tasksの中から指定したtaskを抜き出す
+      // const task = state.tasks.find((t) => t.id === action.payload.id);
+      // if (task) {
+      //   // 抜き出したtaskのtitleを書き換える
+      //   task.title = action.payload.title;
+      // }
     },
     // taskの削除
     deleteTask: (state, aciton) => {
-      // 指定したtask以外で新しくstate.tasksの配列を作成し直している
-      state.tasks = state.tasks.filter((t) => t.id !== aciton.payload.id);
+      // // 指定したtask以外で新しくstate.tasksの配列を作成し直している
+      // state.tasks = state.tasks.filter((t) => t.id !== aciton.payload.id);
     },
     // どのtaskを選択しているか管理
     selectTask: (state, action) => {
@@ -57,14 +77,21 @@ export const taskSlice = createSlice({
     },
     // task完了・未完了のチェックを変更
     completeTask: (state, action) => {
-      // state.tasksの中から指定したtaskを抜き出す
-      const task = state.tasks.find((t) => t.id === action.payload.id);
-      if (task) {
-        // 抜き出したtaskのcompletedを反転させる
-        task.completed = !task.completed;
-      }
+      // // state.tasksの中から指定したtaskを抜き出す
+      // const task = state.tasks.find((t) => t.id === action.payload.id);
+      // if (task) {
+      //   // 抜き出したtaskのcompletedを反転させる
+      //   task.completed = !task.completed;
+      // }
     },
   },
+  extraReducers: (builder) => {
+    builder.addCase(fetchTasks.fulfilled, (state, action) => {
+      // action.paylod === return passData
+      state.tasks = action.payload.allTasks;
+      state.idCount = action.payload.taskNunber
+    })
+  }
 });
 
 export const {

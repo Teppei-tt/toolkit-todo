@@ -11,7 +11,7 @@ import TaskForm from "../taskForm/TaskForm";
 
 //interfaceによる型定義
 interface PropTypes {
-  task: { id: number; title: string; completed: boolean };
+  task: { id: string; title: string; completed: boolean };
 }
 
 //TaskItemコンポーネントに上のPropTypesのpropsを渡すということ
