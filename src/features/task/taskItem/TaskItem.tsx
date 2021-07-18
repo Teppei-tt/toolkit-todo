@@ -5,9 +5,17 @@ import EventNoteIcon from "@material-ui/icons/EventNote";
 import EditIcon from "@material-ui/icons/Edit";
 import DeleteIcon from "@material-ui/icons/Delete";
 import styles from "./TaskItem.module.scss";
-import { deleteTask, selectTask, completeTask, handleModalOpen, selectIsModalOpen } from "../taskSlice";
+import {
+  deleteTask,
+  selectTask,
+  handleModalOpen,
+  selectIsModalOpen,
+  editTask,
+  fetchTasks,
+} from "../taskSlice";
 import Modal from "@material-ui/core/Modal";
 import TaskForm from "../taskForm/TaskForm";
+import { AppDispatch } from "../../../app/store";
 
 //interfaceによる型定義
 interface PropTypes {
@@ -17,7 +25,7 @@ interface PropTypes {
 //TaskItemコンポーネントに上のPropTypesのpropsを渡すということ
 const TaskItem: React.FC<PropTypes> = ({ task }) => {
   const isModalOpen = useSelector(selectIsModalOpen);
-  const dispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
   const handleOpen = () => {
     dispatch(selectTask(task));
     dispatch(handleModalOpen(true));
@@ -25,6 +33,17 @@ const TaskItem: React.FC<PropTypes> = ({ task }) => {
 
   const handleClose = () => {
     dispatch(handleModalOpen(false));
+  };
+
+  const handleEdit = async (id: string, title: string, completed: boolean) => {
+    const sendData = { id, title, completed: !completed };
+    await editTask(sendData);
+    dispatch(fetchTasks());
+  };
+
+  const handleDelete = async (id: string) => {
+    await deleteTask(id);
+    dispatch(fetchTasks());
   };
 
   return (
@@ -36,14 +55,14 @@ const TaskItem: React.FC<PropTypes> = ({ task }) => {
       <div className={styles.right_item}>
         <Checkbox
           checked={task.completed}
-          onClick={() => dispatch(completeTask(task))}
+          onClick={() => handleEdit(task.id, task.title, task.completed)}
           className={styles.checkbox}
         />
         <button onClick={handleOpen} className={styles.edit_button}>
           <EditIcon className={styles.icon} />
         </button>
         <button
-          onClick={() => dispatch(deleteTask(task))}
+          onClick={() => handleDelete(task.id)}
           className={styles.delete_button}
         >
           <DeleteIcon className={styles.icon} />

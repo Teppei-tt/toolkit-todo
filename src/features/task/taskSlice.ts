@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState, AppThunk } from "../../app/store";
 import { db } from "../../firebase";
+import firebase from "firebase";
 
 export interface TaskState {
   //taskが何個あるのかを管理する
@@ -39,34 +40,57 @@ export const fetchTasks = createAsyncThunk("task/getAllTasks", async () => {
   return passData;
 });
 
+/* ===============================
+          Taskの新規作成
+================================ */
+export const createTask = async (title: string): Promise<void> => {
+  try {
+    // 現在の時刻の取得
+    const dateTime = firebase.firestore.Timestamp.fromDate(new Date());
+    // fireStoreのtaskコレクションにデータを追加(Idは自動で振られます)
+    await db
+      .collection("tasks")
+      .add({ title: title, completed: false, dateTime: dateTime });
+  } catch (err) {
+    console.log("Error writing document", err);
+  }
+};
+
+/* ===============================
+          Taskの編集
+================================ */
+export const editTask = async (submitData: {
+  id: string;
+  title: string;
+  completed: boolean;
+}): Promise<void> => {
+  const { id, title, completed } = submitData;
+  const dateTime = firebase.firestore.Timestamp.fromDate(new Date());
+  try {
+    await db
+      .collection("tasks")
+      .doc(id)
+      .set({ title, completed, dateTime }, { merge: true });
+  } catch (err) {
+    console.log("Error updating document:", err);
+  }
+};
+
+/* ===============================
+          Taskの削除
+================================ */
+export const deleteTask = async (id: string): Promise<void> => {
+  try {
+    await db.collection("tasks").doc(id).delete();
+  } catch (err) {
+    console.log("Error removing document:", err);
+  }
+};
+
 export const taskSlice = createSlice({
   name: "task",
   initialState,
   reducers: {
-    // taskの作成
-    createTask: (state, action) => {
-      // state.idCount++;
-      // const newTask = {
-      //   id: state.idCount,
-      //   title: action.payload,
-      //   completed: false,
-      // };
-      // state.tasks = [newTask, ...state.tasks];
-    },
-    // taskの編集
-    editTask: (state, action) => {
-      // // state.tasksの中から指定したtaskを抜き出す
-      // const task = state.tasks.find((t) => t.id === action.payload.id);
-      // if (task) {
-      //   // 抜き出したtaskのtitleを書き換える
-      //   task.title = action.payload.title;
-      // }
-    },
-    // taskの削除
-    deleteTask: (state, aciton) => {
-      // // 指定したtask以外で新しくstate.tasksの配列を作成し直している
-      // state.tasks = state.tasks.filter((t) => t.id !== aciton.payload.id);
-    },
     // どのtaskを選択しているか管理
     selectTask: (state, action) => {
       state.selectedTask = action.payload;
@@ -75,33 +99,17 @@ export const taskSlice = createSlice({
     handleModalOpen: (state, action) => {
       state.isModalOpen = action.payload;
     },
-    // task完了・未完了のチェックを変更
-    completeTask: (state, action) => {
-      // // state.tasksの中から指定したtaskを抜き出す
-      // const task = state.tasks.find((t) => t.id === action.payload.id);
-      // if (task) {
-      //   // 抜き出したtaskのcompletedを反転させる
-      //   task.completed = !task.completed;
-      // }
-    },
   },
   extraReducers: (builder) => {
     builder.addCase(fetchTasks.fulfilled, (state, action) => {
       // action.paylod === return passData
       state.tasks = action.payload.allTasks;
-      state.idCount = action.payload.taskNunber
-    })
-  }
+      state.idCount = action.payload.taskNunber;
+    });
+  },
 });
 
-export const {
-  createTask,
-  editTask,
-  deleteTask,
-  selectTask,
-  handleModalOpen,
-  completeTask,
-} = taskSlice.actions;
+export const { selectTask, handleModalOpen } = taskSlice.actions;
 
 export const selectTasks = (state: RootState): TaskState["tasks"] =>
   state.task.tasks;
