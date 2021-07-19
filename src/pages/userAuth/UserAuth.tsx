@@ -1,10 +1,9 @@
 import React from "react";
+import { RouteComponentProps } from "react-router";
 import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import TextField from "@material-ui/core/TextField";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import Checkbox from "@material-ui/core/Checkbox";
 import Link from "@material-ui/core/Link";
 import Grid from "@material-ui/core/Grid";
 import Box from "@material-ui/core/Box";
@@ -14,6 +13,8 @@ import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
+import { auth } from "../../firebase";
+import { useEffect } from "react";
 
 function Copyright() {
   return (
@@ -53,15 +54,44 @@ interface AuthDataTypes {
   password: string;
 }
 
-const UserAuth: React.FC = () => {
-  // サインイン画面かサインアップ画面かの切り替えをuseStateで管理
-  const [isSignIn, setIsSignIn] = useState(true);
+const UserAuth: React.FC<RouteComponentProps> = (props) => {
   const classes = useStyles();
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<AuthDataTypes>();
+  // サインイン画面かサインアップ画面かの切り替えをuseStateで管理
+  const [isSignIn, setIsSignIn] = useState(true);
+
+  // ログイン処理
+  const handleSignIn = async (data: AuthDataTypes) => {
+    const { email, password } = data;
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+      props.history.push("/");
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  // 新規登録処理
+  const handleSignUp = async (data: AuthDataTypes) => {
+    const { email, password } = data;
+    try {
+      await auth.createUserWithEmailAndPassword(email, password);
+      props.history.push("/");
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+    // ログインしているユーザーが訪れたとき、強制的にアプリ画面に飛ばす
+    useEffect(() => {
+      auth.onAuthStateChanged((user) => {
+        user && props.history.push("/");
+      });
+    }, []);
 
   return (
     <Container component="main" maxWidth="xs">
@@ -71,9 +101,15 @@ const UserAuth: React.FC = () => {
           <LockOutlinedIcon />
         </Avatar>
         <Typography component="h1" variant="h5">
-          {isSignIn ? "ログイン" : "新規登録" }
+          {isSignIn ? "ログイン" : "新規登録"}
         </Typography>
-        <form className={classes.form} noValidate>
+        <form
+          className={classes.form}
+          noValidate
+          onSubmit={
+            isSignIn ? handleSubmit(handleSignIn) : handleSubmit(handleSignUp)
+          }
+        >
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <TextField
@@ -117,12 +153,18 @@ const UserAuth: React.FC = () => {
             color="primary"
             className={classes.submit}
           >
-            {isSignIn ? 'ログインする': '新規登録する'}
+            {isSignIn ? "ログインする" : "新規登録する"}
           </Button>
           <Grid container justifyContent="flex-end">
             <Grid item>
-              <Link href="#" variant="body2" onClick={() => setIsSignIn(!isSignIn)}>
-                {isSignIn ? 'アカウントをお持ちでない方はこちら' : 'アカウントをお持ちの方はこちら'}
+              <Link
+                href="#"
+                variant="body2"
+                onClick={() => setIsSignIn(!isSignIn)}
+              >
+                {isSignIn
+                  ? "アカウントをお持ちでない方はこちら"
+                  : "アカウントをお持ちの方はこちら"}
               </Link>
             </Grid>
           </Grid>
